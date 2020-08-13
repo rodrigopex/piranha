@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import argparse
 import ast
 from collections import namedtuple
 from functools import partial
@@ -50,6 +51,50 @@ def remove_feature(node, remove_if=True):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('s',
+                        '--source',
+                        help='Path of input file for refactoring',
+                        required=True)
+
+    parser.add_argument('f',
+                        '--flag',
+                        help='Name of the stale flag',
+                        required=True)
+
+    parser.add_argument('p',
+                        '--properties',
+                        help='Path of configuration file for Piranha',
+                        required=True)
+
+    parser.add_argument(
+        'o',
+        '--output',
+        help=
+        'Destination of the refactored output. File is modified in-place by default.'
+    )
+
+    parser.add_argument(
+        't',
+        '--treated',
+        help=
+        'If this option is supplied, the flag is treated, otherwise it is control.',
+        nargs='+')
+
+    parser.add_argument(
+        'n',
+        '--max_cleanup_steps',
+        help=
+        'The number of times literals should be simplified. Runs until fixed point by default.',
+        type=int)
+
+    parser.add_argument('c',
+                        '--keep_comments',
+                        help='To keep all comments',
+                        action_store=True)
+
+    args = parser.parse_args()
+
     input_file = Path("./samples/ex01.py")
     with input_file.open("r") as code_stream:
         print("=== BEFORE ===================================")
