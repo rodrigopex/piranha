@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import argparse
 import ast
+import os
+
 from collections import namedtuple
 from functools import partial
 from pathlib import Path
@@ -98,17 +100,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    input_file = Path(args.source)
-    with input_file.open("r") as code_stream:
-        print("=== BEFORE ===================================")
-        code = code_stream.read()
-        print(code)
-        red = RedBaron(code)
-        # red.help(True)
-        current = FeatureFlagsParams("client", "is_enabled", f'"{args.flag}"',
-                                     False)
-        for node in red.find_all("AtomtrailersNode",
-                                 value=partial(find_freature_flag, current)):
-            remove_feature(node, remove_if=current.remove_if)
-        print("\n\n=== AFTER ====================================")
-        print(red)
+    for folder, dirs, files in os.walk(args.source):
+        for file in files:
+            input_file = Path("{}/{}".format(folder, file))
+            with input_file.open("r") as code_stream:
+                print("=== BEFORE ===================================")
+                code = code_stream.read()
+                print(code)
+                red = RedBaron(code)
+                # red.help(True)
+                current = FeatureFlagsParams("client", "is_enabled", f'"{args.flag}"',
+                                            False)
+                for node in red.find_all("AtomtrailersNode",
+                                        value=partial(find_freature_flag, current)):
+                    remove_feature(node, remove_if=current.remove_if)
+                print("\n\n=== AFTER ====================================")
+                print(red)
