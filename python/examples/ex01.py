@@ -18,6 +18,13 @@ else:
         a = 5
     else:
         a = 3
-        if client.is_enabled("feature 3"):
+        if not client.is_enabled("feature 3"):
             print("The feature 3 is implemented")
 print("The result is:", a)
+
+
+def show_info():
+    if client.is_enabled("feature 1") and client.is_enabled("feature 2"):
+        print("Info feature 1 e 2!!!")
+    else:
+        print("Info default")
