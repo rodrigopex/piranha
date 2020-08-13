@@ -54,16 +54,16 @@ def remove_feature(node, remove_if=True):
 
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser(description='Process some integers.')
-    # parser.add_argument('s',
-    #                     '--source',
-    #                     help='Path of input file for refactoring',
-    #                     required=True)
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('-s',
+                        '--source',
+                        help='Path of input file for refactoring',
+                        required=True)
 
-    # parser.add_argument('f',
-    #                     '--flag',
-    #                     help='Name of the stale flag',
-    #                     required=True)
+    parser.add_argument('-f',
+                        '--flag',
+                        help='Name of the stale flag',
+                        required=True)
 
     # parser.add_argument('p',
     #                     '--properties',
@@ -96,16 +96,16 @@ if __name__ == "__main__":
     #                     help='To keep all comments',
     #                     action_store=True)
 
-    # args = parser.parse_args()
+    args = parser.parse_args()
 
-    input_file = Path("../examples/ex01.py")
+    input_file = Path(args.source)
     with input_file.open("r") as code_stream:
         print("=== BEFORE ===================================")
         code = code_stream.read()
         print(code)
         red = RedBaron(code)
         # red.help(True)
-        current = FeatureFlagsParams("client", "is_enabled", '"feature 3"',
+        current = FeatureFlagsParams("client", "is_enabled", f'"{args.flag}"',
                                      False)
         for node in red.find_all("AtomtrailersNode",
                                  value=partial(find_freature_flag, current)):
