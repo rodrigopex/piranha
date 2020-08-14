@@ -116,3 +116,10 @@ if __name__ == "__main__":
                     remove_feature(node, remove_if=current.remove_if)
                 print("\n\n=== AFTER ====================================")
                 print(red)
+
+                print("accept change? (yes/no)")
+
+                response = input()
+
+                if response == "yes":
+                    input_file.write_text(red.dumps())
