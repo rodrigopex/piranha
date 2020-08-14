@@ -18,8 +18,8 @@ def find_freature_flag(feature_flags_parameters: FeatureFlagsParams, value):
     try:
         if (value[0].value == feature_flags_parameters.client_name) and (
                 value[1].value == feature_flags_parameters.enable_method_name
-        ) and (value[2].value[0].value.value ==
-               feature_flags_parameters.feature_name):
+        ) and (not isinstance(value[2].value[0], str) and not isinstance(value[2].value[0].value, str) 
+            and value[2].value[0].value.value == feature_flags_parameters.feature_name):
             return True
     except IndexError:
         pass
@@ -60,66 +60,59 @@ if __name__ == "__main__":
     parser.add_argument('-s',
                         '--source',
                         help='Path of input file for refactoring',
-                        required=True)
+                        default='../../great-domestic-ui')
 
     parser.add_argument('-f',
                         '--flag',
-                        help='Name of the stale flag',
-                        required=True)
+                        default='INTERNATIONAL_CONTACT_TRIAGE_ON',
+                        help='Name of the stale flag')
 
-    # parser.add_argument('p',
-    #                     '--properties',
-    #                     help='Path of configuration file for Piranha',
-    #                     required=True)
+    parser.add_argument('-m',
+                        '--model',
+                        default='settings',
+                        help='flag model')
 
-    # parser.add_argument(
-    #     'o',
-    #     '--output',
-    #     help=
-    #     'Destination of the refactored output. File is modified in-place by default.'
-    # )
+    parser.add_argument('-mt',
+                        '--method',
+                        default='FEATURE_FLAGS',
+                        help='flag method')
 
-    # parser.add_argument(
-    #     't',
-    #     '--treated',
-    #     help=
-    #     'If this option is supplied, the flag is treated, otherwise it is control.',
-    #     nargs='+')
-
-    # parser.add_argument(
-    #     'n',
-    #     '--max_cleanup_steps',
-    #     help=
-    #     'The number of times literals should be simplified. Runs until fixed point by default.',
-    #     type=int)
-
-    # parser.add_argument('c',
-    #                     '--keep_comments',
-    #                     help='To keep all comments',
-    #                     action_store=True)
 
     args = parser.parse_args()
 
     for folder, dirs, files in os.walk(args.source):
         for file in files:
-            input_file = Path("{}/{}".format(folder, file))
-            with input_file.open("r") as code_stream:
-                print("=== BEFORE ===================================")
-                code = code_stream.read()
-                print(code)
-                red = RedBaron(code)
-                # red.help(True)
-                current = FeatureFlagsParams("client", "is_enabled", f'"{args.flag}"',
-                                            False)
-                for node in red.find_all("AtomtrailersNode",
-                                        value=partial(find_freature_flag, current)):
-                    remove_feature(node, remove_if=current.remove_if)
-                print("\n\n=== AFTER ====================================")
-                print(red)
+            if ".py" in file:
+                input_file = Path("{}/{}".format(folder, file))
+                with input_file.open("r") as code_stream:
+                    try:
+                        code = code_stream.read()   
+                        red = RedBaron(code)
 
-                print("accept change? (yes/no)")
+                        print("=== BEFORE ===================================")
+                        print(code)
+                        
+                        # red.help(True)
+                        # current = FeatureFlagsParams("client", "is_enabled", f'"{args.flag}"',
+                        #                             False)
+                        current = FeatureFlagsParams(args.model, args.method, f'"{args.flag}"',
+                                                    False)
+                        removed = False
+                        for node in red.find_all("AtomtrailersNode",
+                                                value=partial(find_freature_flag, current)):
+                            remove_feature(node, remove_if=current.remove_if)
+                            removed = True
 
-                response = input()
+                        if removed:    
+                            print("\n\n=== AFTER ====================================")
+                            print(red)
 
-                if response == "yes":
-                    input_file.write_text(red.dumps())
+                            print("accept change? (yes/no)")
+
+                            response = input()
+
+                            if response == "yes":
+                                input_file.write_text(red.dumps())
+                    except:
+                        print()
+                        
