@@ -13,6 +13,20 @@ FeatureFlagsParams = namedtuple(
     "FeatureFlagsParams",
     "client_name enable_method_name feature_name remove_if")
 
+def find_feature_flag_in_jinja(code, feature_flag):
+    conditional="{% if "
+    start_sep=conditional+feature_flag
+    end_sep="endif %}"
+    result=[]
+    tmp=code.split(start_sep)
+    for par in tmp:
+        if end_sep in par:
+            result.append(par.split(end_sep)[0])
+
+    return "{}{}{}".format(start_sep, result[0], end_sep)
+
+def remove_feature_flag_in_jinja(full_code, code_snippet):
+    return full_code.replace(code_snippet, "")
 
 def find_freature_flag(feature_flags_parameters: FeatureFlagsParams, value):
     try:
@@ -115,4 +129,29 @@ if __name__ == "__main__":
                                 input_file.write_text(red.dumps())
                     except:
                         print()
+            elif ".html" in file:
+                input_file = Path("{}/{}".format(folder, file))
+                with input_file.open("r") as code_stream:
+                    try:
+                        code = code_stream.read()   
                         
+                        print("=== BEFORE ===================================")
+                        print(code)
+
+                        code_snippet = find_feature_flag_in_jinja(code, args.flag)
+
+                        if code_snippet:    
+                            print("\n\n=== AFTER ====================================")
+
+                            code_after = remove_feature_flag_in_jinja(code, code_snippet)
+                            print(code_after)
+
+                            print("accept change? (yes/no)")
+
+                            response = input()
+
+                            if response == "yes":
+                                input_file.write_text(code_after)
+                    except:
+                        print()
+                
