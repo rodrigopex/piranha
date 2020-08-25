@@ -2,6 +2,7 @@
 import argparse
 import ast
 import os
+import re
 
 from collections import namedtuple
 from functools import partial
@@ -13,17 +14,14 @@ FeatureFlagsParams = namedtuple(
     "FeatureFlagsParams",
     "client_name enable_method_name feature_name remove_if")
 
-def find_feature_flag_in_jinja(code, feature_flag):
-    conditional="{% if "
-    start_sep=conditional+feature_flag
-    end_sep="endif %}"
-    result=[]
-    tmp=code.split(start_sep)
-    for par in tmp:
-        if end_sep in par:
-            result.append(par.split(end_sep)[0])
-
-    return "{}{}{}".format(start_sep, result[0], end_sep)
+def find_feature_flag_in_jinja(code, feature_flag, model):
+    regex = "{%\s*if\s*"+model+"."+feature_flag+"\s*(.*?)\s\s*%}"
+    feature_flag_headers = re.findall(regex, code)
+    if len(feature_flag_headers) > 0:
+        find_sentence = "{% if "+model+"."+feature_flag+" "
+        start_index = code.find(find_sentence+feature_flag_headers[0])
+        end_index = code[start_index:len(code)].find("endif %}")+start_index
+        return code[start_index:end_index]
 
 def remove_feature_flag_in_jinja(full_code, code_snippet):
     return full_code.replace(code_snippet, "")
@@ -78,12 +76,12 @@ if __name__ == "__main__":
 
     parser.add_argument('-f',
                         '--flag',
-                        default='INTERNATIONAL_CONTACT_TRIAGE_ON',
+                        default='PROTOTYPE_PAGES_ON',
                         help='Name of the stale flag')
 
     parser.add_argument('-m',
                         '--model',
-                        default='settings',
+                        default='features',
                         help='flag model')
 
     parser.add_argument('-mt',
@@ -102,13 +100,6 @@ if __name__ == "__main__":
                     try:
                         code = code_stream.read()   
                         red = RedBaron(code)
-
-                        print("=== BEFORE ===================================")
-                        print(code)
-                        
-                        # red.help(True)
-                        # current = FeatureFlagsParams("client", "is_enabled", f'"{args.flag}"',
-                        #                             False)
                         current = FeatureFlagsParams(args.model, args.method, f'"{args.flag}"',
                                                     False)
                         removed = False
@@ -118,6 +109,8 @@ if __name__ == "__main__":
                             removed = True
 
                         if removed:    
+                            print("=== BEFORE ===================================")
+                            print(code)
                             print("\n\n=== AFTER ====================================")
                             print(red)
 
@@ -134,13 +127,11 @@ if __name__ == "__main__":
                 with input_file.open("r") as code_stream:
                     try:
                         code = code_stream.read()   
-                        
-                        print("=== BEFORE ===================================")
-                        print(code)
+                        code_snippet = find_feature_flag_in_jinja(code, args.flag, args.model)
 
-                        code_snippet = find_feature_flag_in_jinja(code, args.flag)
-
-                        if code_snippet:    
+                        if code_snippet:  
+                            print("=== BEFORE ===================================")
+                            print(code)  
                             print("\n\n=== AFTER ====================================")
 
                             code_after = remove_feature_flag_in_jinja(code, code_snippet)
