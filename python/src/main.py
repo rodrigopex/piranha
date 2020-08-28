@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 import argparse
-# import ast
+import difflib
 import os
 import re
+import time
 from collections import namedtuple
 from functools import partial
 from pathlib import Path
@@ -14,6 +15,40 @@ from redbaron import AssignmentNode, IfelseblockNode, NodeList, RedBaron
 FeatureFlagsParams = namedtuple(
     "FeatureFlagsParams",
     "client_name enable_method_name feature_name remove_if")
+
+
+def diff_strings(a, b):
+    output = []
+    matcher = difflib.SequenceMatcher(None, a, b)
+    # print([str(chunk) for chunk in matcher.get_grouped_opcodes(n=5)])
+    for chunk in matcher.get_grouped_opcodes(n=300):
+        output.append(
+            f"{colored.fg('black')}{colored.bg('blue')} hidden code ... {colored.attr('reset')}\n"
+        )
+        for opcode, a0, a1, b0, b1 in chunk:
+            if opcode == "equal":
+                output.append(a[a0:a1])
+            elif opcode == "insert":
+                output.append(
+                    f"{colored.fg('black')}{colored.bg('green')}{b[b0:b1]}{colored.attr('reset')}"
+                )
+            elif opcode == "delete":
+                output.append(
+                    f"{colored.fg('black')}{colored.bg('red')}{a[a0:a1]}{colored.attr('reset')}"
+                )
+            elif opcode == "replace":
+                output.append(
+                    f"{colored.fg('black')}{colored.bg('green')}{b[b0:b1]}{colored.attr('reset')}"
+                )
+                output.append(
+                    f"{colored.fg('black')}{colored.bg('red')}{a[a0:a1]}{colored.attr('reset')}"
+                )
+                # output.append(color(b[b0:b1], fg=16, bg="green"))
+                # output.append(color(a[a0:a1], fg=16, bg="red"))
+    output.append(
+        f"\n{colored.fg('black')}{colored.bg('blue')} hidden code ... {colored.attr('reset')}\n"
+    )
+    return "".join(output)
 
 
 def find_feature_flag_in_jinja(code, feature_flag, model):
@@ -131,10 +166,12 @@ if __name__ == "__main__":
      * Format: {args.method}('{args.flag}')
      * Folder: {args.source}
     """)
+    count = 0
     for folder, dirs, files in os.walk(args.source):
         for file in files:
             if ".py" in file:
-                print(f"File: {folder}/{file}   ", end='')
+                count += 1
+                print(f"File #{count}: {folder}/{file}   ", end='')
                 input_file = Path("{}/{}".format(folder, file))
                 with input_file.open("r") as code_stream:
                     try:
@@ -153,6 +190,7 @@ if __name__ == "__main__":
                                 print(
                                     f"{colored.fg('black')}{colored.bg('orange_3')} FLAG NOT FOUND {colored.attr('reset')}"
                                 )
+                                time.sleep(0.003)
                                 continue
                         else:
                             print(
@@ -179,15 +217,13 @@ if __name__ == "__main__":
 
                         if removed:
                             print(
-                                "=== BEFORE ==================================="
+                                "\n=== Proposed changes ======================================="
                             )
-                            print(code)
+                            print(diff_strings(code, red.dumps()))
                             print(
-                                "\n\n=== AFTER ===================================="
-                            )
-                            print(red.dumps())
-
-                            print("accept change? (y/[n])")
+                                """============================================================
+ Accept change? (y/[n])
+ """)
 
                             response = input()
 
