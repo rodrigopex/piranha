@@ -9,7 +9,7 @@ from pathlib import Path
 
 import colored
 from colored import stylize
-from redbaron import IfelseblockNode, NodeList, RedBaron
+from redbaron import AssignmentNode, IfelseblockNode, NodeList, RedBaron
 
 FeatureFlagsParams = namedtuple(
     "FeatureFlagsParams",
@@ -28,6 +28,17 @@ def find_feature_flag_in_jinja(code, feature_flag, model):
 
 def remove_feature_flag_in_jinja(full_code, code_snippet):
     return full_code.replace(code_snippet, "")
+
+
+def find_django_flags_dict(feature_flags_parameters: FeatureFlagsParams,
+                           value):
+    try:
+        if str(value.parent.target) == "FLAGS":
+            return True
+    except IndexError:
+        pass
+    except Exception as err:
+        print("Unexpected error:", err)
 
 
 def find_django_flags(feature_flags_parameters: FeatureFlagsParams, value):
@@ -50,6 +61,13 @@ def find_freature_flag(feature_flags_parameters: FeatureFlagsParams, value):
             return True
     except IndexError:
         pass
+
+
+def remove_feature_flag_from_settings(node):
+    for n, child in enumerate(node.value.value):
+        #print(child.help())
+        print(str(child.key))
+    # print(node.help(deep=3))
 
 
 def remove_feature(node, remove_if=True):
@@ -120,11 +138,13 @@ if __name__ == "__main__":
                         current = FeatureFlagsParams(args.model, args.method,
                                                      f"'{args.flag}'", True)
                         removed = False
+                        settings_file = False
                         if current.feature_name not in code:
                             if "FLAGS = {" in code:
                                 print(
                                     f"{colored.fg('black')}{colored.bg('light_blue')} SETTINGS FILE FOUND {colored.attr('reset')}"
                                 )
+                                settings_file = True
                             else:
                                 print(
                                     f"{colored.fg('black')}{colored.bg('orange_3')} FLAG NOT FOUND {colored.attr('reset')}"
@@ -135,32 +155,41 @@ if __name__ == "__main__":
                                 f"{colored.fg('black')}{colored.bg('green')} FLAG FOUND {colored.attr('reset')}"
                             )
                         red = RedBaron(code)
-                        for node in red.find_all("AtomtrailersNode",
-                                                 value=partial(
-                                                     find_django_flags,
-                                                     current)):
-                            remove_feature(node, remove_if=current.remove_if)
-                            removed = True
+                        if settings_file:
+                            a = red.find_all("AssignmentNode",
+                                             value=partial(
+                                                 find_django_flags_dict,
+                                                 current))
+                            for node in a:
+                                remove_feature_flag_from_settings(node)
+                        else:
+                            for node in red.find_all("AtomtrailersNode",
+                                                     value=partial(
+                                                         find_django_flags,
+                                                         current)):
+                                remove_feature(node,
+                                               remove_if=current.remove_if)
+                                removed = True
 
-                        if removed:
-                            print(
-                                "=== BEFORE ==================================="
-                            )
-                            print(code)
-                            print(
-                                "\n\n=== AFTER ===================================="
-                            )
-                            print(red)
+                            if removed:
+                                print(
+                                    "=== BEFORE ==================================="
+                                )
+                                print(code)
+                                print(
+                                    "\n\n=== AFTER ===================================="
+                                )
+                                print(red)
 
-                            print("accept change? (y[n])")
+                                print("accept change? (y[n])")
 
-                            response = input()
+                                response = input()
 
-                            if response.lower() == "y":
-                                print("[y] chosen: file changed!\n")
-                                input_file.write_text(red.dumps())
-                            else:
-                                print("[n] chosen: file not changed!\n")
+                                if response.lower() == "y":
+                                    print("[y] chosen: file changed!\n")
+                                    input_file.write_text(red.dumps())
+                                else:
+                                    print("[n] chosen: file not changed!\n")
                     except KeyboardInterrupt:
                         exit(0)
                     except:
