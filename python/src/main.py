@@ -33,7 +33,6 @@ def find_django_flags(feature_flags_parameters: FeatureFlagsParams, value):
         if (value[0].value == feature_flags_parameters.enable_method_name
             ) and (str(value[1].value[0].value) ==
                    feature_flags_parameters.feature_name):
-            print("Here!")
             return True
     except IndexError:
         pass
@@ -55,12 +54,9 @@ def remove_feature(node, remove_if=True):
     parent = node.parent
     while parent:
         if type(parent) == IfelseblockNode:
-            print("found ifelse block!")
             ifelseblock = parent
             new_position = ifelseblock.index_on_parent
             new_parent = ifelseblock.parent
-            print(" >>> New parent:", new_position, type(new_parent))
-            new_parent.help(deep=1)
             array_ref = new_parent
             if type(new_parent) != RedBaron:
                 array_ref = new_parent.value
@@ -102,9 +98,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    print("#" * 65)
+    print("# PIRANHA for Django-flags".ljust(64) + "#")
+    print("#" * 65)
+
+    print(f"""
+ *** Trying to remove flag:
+     * Format: {args.method}('{args.flag}')
+     * Folder: {args.source}
+    """)
     for folder, dirs, files in os.walk(args.source):
         for file in files:
             if ".py" in file:
+                print(f"File: {file}".ljust(65), end='')
                 input_file = Path("{}/{}".format(folder, file))
                 with input_file.open("r") as code_stream:
                     try:
@@ -122,6 +128,7 @@ if __name__ == "__main__":
                             removed = True
 
                         if removed:
+                            print("[flag found]")
                             print(
                                 "=== BEFORE ==================================="
                             )
@@ -137,9 +144,12 @@ if __name__ == "__main__":
 
                             if response == "yes":
                                 input_file.write_text(red.dumps())
+                        else:
+                            print("[flag not found]")
+                    except KeyboardInterrupt:
+                        exit(0)
                     except:
-                        print("Nothing to do")
-                        print()
+                        pass
             elif ".html" in file:
                 input_file = Path("{}/{}".format(folder, file))
                 with input_file.open("r") as code_stream:
