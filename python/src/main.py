@@ -7,6 +7,8 @@ from collections import namedtuple
 from functools import partial
 from pathlib import Path
 
+import colored
+from colored import stylize
 from redbaron import IfelseblockNode, NodeList, RedBaron
 
 FeatureFlagsParams = namedtuple(
@@ -110,16 +112,23 @@ if __name__ == "__main__":
     for folder, dirs, files in os.walk(args.source):
         for file in files:
             if ".py" in file:
-                print(f"File: {file}".ljust(65), end='')
+                print(f"File: {folder}/{file}   ", end='')
                 input_file = Path("{}/{}".format(folder, file))
                 with input_file.open("r") as code_stream:
                     try:
                         code = code_stream.read()
-                        red = RedBaron(code)
-                        # print(red)
                         current = FeatureFlagsParams(args.model, args.method,
                                                      f"'{args.flag}'", True)
                         removed = False
+                        if current.feature_name not in code:
+                            print(
+                                f"{colored.fg('black')}{colored.bg('orange_3')} FLAG NOT FOUND {colored.attr('reset')}"
+                            )
+                            continue
+                        print(
+                            f"{colored.fg('black')}{colored.bg('green')} FLAG FOUND {colored.attr('reset')}"
+                        )
+                        red = RedBaron(code)
                         for node in red.find_all("AtomtrailersNode",
                                                  value=partial(
                                                      find_django_flags,
@@ -128,7 +137,6 @@ if __name__ == "__main__":
                             removed = True
 
                         if removed:
-                            print("[flag found]")
                             print(
                                 "=== BEFORE ==================================="
                             )
@@ -149,7 +157,7 @@ if __name__ == "__main__":
                     except KeyboardInterrupt:
                         exit(0)
                     except:
-                        pass
+                        print("\n\n\nERROR\n\n\n")
             elif ".html" in file:
                 input_file = Path("{}/{}".format(folder, file))
                 with input_file.open("r") as code_stream:
