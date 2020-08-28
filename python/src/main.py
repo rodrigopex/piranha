@@ -121,13 +121,19 @@ if __name__ == "__main__":
                                                      f"'{args.flag}'", True)
                         removed = False
                         if current.feature_name not in code:
+                            if "FLAGS = {" in code:
+                                print(
+                                    f"{colored.fg('black')}{colored.bg('light_blue')} SETTINGS FILE FOUND {colored.attr('reset')}"
+                                )
+                            else:
+                                print(
+                                    f"{colored.fg('black')}{colored.bg('orange_3')} FLAG NOT FOUND {colored.attr('reset')}"
+                                )
+                                continue
+                        else:
                             print(
-                                f"{colored.fg('black')}{colored.bg('orange_3')} FLAG NOT FOUND {colored.attr('reset')}"
+                                f"{colored.fg('black')}{colored.bg('green')} FLAG FOUND {colored.attr('reset')}"
                             )
-                            continue
-                        print(
-                            f"{colored.fg('black')}{colored.bg('green')} FLAG FOUND {colored.attr('reset')}"
-                        )
                         red = RedBaron(code)
                         for node in red.find_all("AtomtrailersNode",
                                                  value=partial(
@@ -146,14 +152,15 @@ if __name__ == "__main__":
                             )
                             print(red)
 
-                            print("accept change? (yes/no)")
+                            print("accept change? (y[n])")
 
                             response = input()
 
-                            if response == "yes":
+                            if response.lower() == "y":
+                                print("[y] chosen: file changed!\n")
                                 input_file.write_text(red.dumps())
-                        else:
-                            print("[flag not found]")
+                            else:
+                                print("[n] chosen: file not changed!\n")
                     except KeyboardInterrupt:
                         exit(0)
                     except:
