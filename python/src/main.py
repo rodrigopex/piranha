@@ -63,11 +63,15 @@ def find_freature_flag(feature_flags_parameters: FeatureFlagsParams, value):
         pass
 
 
-def remove_feature_flag_from_settings(node):
+def remove_feature_flag_from_settings(
+    feature_flags_parameters: FeatureFlagsParams, node):
     for n, child in enumerate(node.value.value):
-        #print(child.help())
-        print(str(child.key))
-    # print(node.help(deep=3))
+        key = str(child.key).replace("'", "").replace('"', "")
+        if key == feature_flags_parameters.feature_name.replace("'",
+                                                                "").replace(
+                                                                    '"', ""):
+            del node.value.value[n]
+            break
 
 
 def remove_feature(node, remove_if=True):
@@ -161,7 +165,9 @@ if __name__ == "__main__":
                                                  find_django_flags_dict,
                                                  current))
                             for node in a:
-                                remove_feature_flag_from_settings(node)
+                                remove_feature_flag_from_settings(
+                                    current, node)
+                                removed = True
                         else:
                             for node in red.find_all("AtomtrailersNode",
                                                      value=partial(
@@ -171,25 +177,25 @@ if __name__ == "__main__":
                                                remove_if=current.remove_if)
                                 removed = True
 
-                            if removed:
-                                print(
-                                    "=== BEFORE ==================================="
-                                )
-                                print(code)
-                                print(
-                                    "\n\n=== AFTER ===================================="
-                                )
-                                print(red)
+                        if removed:
+                            print(
+                                "=== BEFORE ==================================="
+                            )
+                            print(code)
+                            print(
+                                "\n\n=== AFTER ===================================="
+                            )
+                            print(red.dumps())
 
-                                print("accept change? (y[n])")
+                            print("accept change? (y/[n])")
 
-                                response = input()
+                            response = input()
 
-                                if response.lower() == "y":
-                                    print("[y] chosen: file changed!\n")
-                                    input_file.write_text(red.dumps())
-                                else:
-                                    print("[n] chosen: file not changed!\n")
+                            if response.lower() == "y":
+                                print("[y] chosen: file changed!\n")
+                                input_file.write_text(red.dumps())
+                            else:
+                                print("[n] chosen: file not changed!\n")
                     except KeyboardInterrupt:
                         exit(0)
                     except:
