@@ -65,12 +65,12 @@ def find_freature_flag(feature_flags_parameters: FeatureFlagsParams, value):
 
 def remove_feature_flag_from_settings(
     feature_flags_parameters: FeatureFlagsParams, node):
-    for n, child in enumerate(node.value.value):
+    for index, child in enumerate(node.value.value):
         key = str(child.key).replace("'", "").replace('"', "")
         if key == feature_flags_parameters.feature_name.replace("'",
                                                                 "").replace(
                                                                     '"', ""):
-            del node.value.value[n]
+            node.value.value.pop(index)
             break
 
 
