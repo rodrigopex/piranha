@@ -38,11 +38,12 @@ def diff_strings(a, b):
                 )
             elif opcode == "replace":
                 output.append(
-                    f"{colored.fg('black')}{colored.bg('green')}{b[b0:b1]}{colored.attr('reset')}"
-                )
-                output.append(
                     f"{colored.fg('black')}{colored.bg('red')}{a[a0:a1]}{colored.attr('reset')}"
                 )
+                output.append(
+                    f"{colored.fg('black')}{colored.bg('green')}{b[b0:b1]}{colored.attr('reset')}"
+                )
+
                 # output.append(color(b[b0:b1], fg=16, bg="green"))
                 # output.append(color(a[a0:a1], fg=16, bg="red"))
     output.append(
@@ -125,12 +126,17 @@ def remove_feature(node, remove_if=True):
                     rescue_node = ifelseblock.value[1]
                 except IndexError:
                     rescue_node = None
+
+            #rescue_node.help(deep=True)
             array_ref.pop(new_position)
             if rescue_node:
                 for position, sub_node in enumerate(rescue_node.value,
                                                     new_position):
-                    array_ref.insert(position, sub_node)
-                    break
+                    try:
+                        array_ref.insert(position, sub_node)
+                    except:
+                        pass
+                    # break
             return
         else:
             parent = parent.parent
@@ -246,8 +252,8 @@ if __name__ == "__main__":
                                 print("[n] chosen: file not changed!\n")
                     except KeyboardInterrupt:
                         exit(0)
-                    except:
-                        print("\n\n\nERROR\n\n\n")
+                    except Exception as exc:
+                        print("\n\n\nERROR\n\n\n", exc)
             elif ".html" in file:
                 input_file = Path("{}/{}".format(folder, file))
                 with input_file.open("r") as code_stream:
