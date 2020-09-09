@@ -38,11 +38,12 @@ def diff_strings(a, b):
                 )
             elif opcode == "replace":
                 output.append(
-                    f"{colored.fg('black')}{colored.bg('green')}{b[b0:b1]}{colored.attr('reset')}"
-                )
-                output.append(
                     f"{colored.fg('black')}{colored.bg('red')}{a[a0:a1]}{colored.attr('reset')}"
                 )
+                output.append(
+                    f"{colored.fg('black')}{colored.bg('green')}{b[b0:b1]}{colored.attr('reset')}"
+                )
+
                 # output.append(color(b[b0:b1], fg=16, bg="green"))
                 # output.append(color(a[a0:a1], fg=16, bg="red"))
     output.append(
@@ -125,12 +126,17 @@ def remove_feature(node, remove_if=True):
                     rescue_node = ifelseblock.value[1]
                 except IndexError:
                     rescue_node = None
+
+            #rescue_node.help(deep=True)
             array_ref.pop(new_position)
             if rescue_node:
                 for position, sub_node in enumerate(rescue_node.value,
                                                     new_position):
-                    array_ref.insert(position, sub_node)
-                    break
+                    try:
+                        array_ref.insert(position, sub_node)
+                    except:
+                        pass
+                    # break
             return
         else:
             parent = parent.parent
@@ -155,7 +161,18 @@ if __name__ == "__main__":
                         default='FEATURE_FLAGS',
                         help='flag method')
 
+    parser.add_argument('-c',
+                        '--control',
+                        action='store_false',
+                        help='flag is threated')
+
     args = parser.parse_args()
+
+    is_control = True
+    try:
+        is_control = args.control
+    except:
+        pass
 
     print("#" * 65)
     print("# PIRANHA for Django-flags".ljust(64) + "#")
@@ -177,7 +194,8 @@ if __name__ == "__main__":
                     try:
                         code = code_stream.read()
                         current = FeatureFlagsParams(args.model, args.method,
-                                                     f"'{args.flag}'", True)
+                                                     f"'{args.flag}'",
+                                                     is_control)
                         removed = False
                         settings_file = False
                         if current.feature_name not in code:
@@ -234,8 +252,8 @@ if __name__ == "__main__":
                                 print("[n] chosen: file not changed!\n")
                     except KeyboardInterrupt:
                         exit(0)
-                    except:
-                        print("\n\n\nERROR\n\n\n")
+                    except Exception as exc:
+                        print("\n\n\nERROR\n\n\n", exc)
             elif ".html" in file:
                 input_file = Path("{}/{}".format(folder, file))
                 with input_file.open("r") as code_stream:

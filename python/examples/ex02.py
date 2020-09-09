@@ -30,3 +30,5 @@ class AskSearch:
                 and flag_enabled('ASK_SEARCH_TYPOS', request=request)):
             self.queryset = self.query_base.filter(content=suggestion)
             self.search_term, self.suggestion = suggestion, self.search_term
+        else:
+            print("hello world")
