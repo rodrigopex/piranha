@@ -155,7 +155,18 @@ if __name__ == "__main__":
                         default='FEATURE_FLAGS',
                         help='flag method')
 
+    parser.add_argument('-c',
+                        '--control',
+                        action='store_false',
+                        help='flag is threated')
+
     args = parser.parse_args()
+
+    is_control = True
+    try:
+        is_control = args.control
+    except:
+        pass
 
     print("#" * 65)
     print("# PIRANHA for Django-flags".ljust(64) + "#")
@@ -177,7 +188,8 @@ if __name__ == "__main__":
                     try:
                         code = code_stream.read()
                         current = FeatureFlagsParams(args.model, args.method,
-                                                     f"'{args.flag}'", True)
+                                                     f"'{args.flag}'",
+                                                     is_control)
                         removed = False
                         settings_file = False
                         if current.feature_name not in code:
